@@ -1,6 +1,4 @@
 import streamlit as st
-st.set_page_config(layout="wide")
-
 import pandas as pd
 from Transformations import TransformationRotaReady
 
@@ -10,6 +8,7 @@ def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
 
 st.title('Transforming RotaReady CSV')
+st.set_page_config(layout="wide")
 
 uploaded_file = st.sidebar.file_uploader("Choose a file", accept_multiple_files=True)
 expander_original = st.expander("Original CSV")
@@ -35,11 +34,17 @@ if uploaded_file is not None and uploaded_file != []:
     expander_final = st.expander("Final CSV", expanded=True)
     expander_final.write(df_transformed)
 
+    # transform start to a datetime object
+    df["Start"] = pd.to_datetime(df["Start"])
+    # sort by start
+    df = df.sort_values(by=["Start"])
+
+
     # get minimum date
-    min_date = df["Start"].min()
-    max_date = df["Start"].max()
-    min_date = pd.to_datetime(min_date).strftime("%Y-%m-%d")
-    max_date = pd.to_datetime(max_date).strftime("%Y-%m-%d")
+    min_date = df["Start"].min().strftime("%Y-%m-%d")
+    # get maximum date
+    max_date = df["Start"].max().strftime("%Y-%m-%d")
+
     # download the csv
     csv = df.to_csv(index=False)
 
