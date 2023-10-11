@@ -1,14 +1,13 @@
 import streamlit as st
+st.set_page_config(layout="wide")
+
 import pandas as pd
 from Transformations import TransformationRotaReady
-
-
 
 def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
 
 st.title('Transforming RotaReady CSV')
-st.set_page_config(layout="wide")
 
 uploaded_file = st.sidebar.file_uploader("Choose a file", accept_multiple_files=True)
 expander_original = st.expander("Original CSV")
