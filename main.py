@@ -34,15 +34,19 @@ if uploaded_file is not None and uploaded_file != []:
     expander_final.write(df_transformed)
 
     # transform start to a datetime object
-    df["Start"] = pd.to_datetime(df["Start"])
+    df["Start"] = pd.to_datetime(df["Start"], format='mixed', dayfirst=True)
     # sort by start
     df = df.sort_values(by=["Start"])
 
 
     # get minimum date
-    min_date = df["Start"].min().strftime("%Y-%m-%d")
+    min_date = df["Start"].min()
     # get maximum date
-    max_date = df["Start"].max().strftime("%Y-%m-%d")
+    max_date = df["Start"].max()
+
+    # make only date
+    min_date = min_date.date()
+    max_date = max_date.date()
 
     # download the csv
     csv = df.to_csv(index=False)
