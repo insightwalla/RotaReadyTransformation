@@ -26,7 +26,8 @@ if uploaded_file is not None and uploaded_file != []:
         df = df
     elif choice == 'Fourth Double Shifts':
         st.warning('Work In Progress')
-        st.stop()
+        df = TransformationFourtDOUBLE(df).df
+        
 
     # filter only my first name and last name
     names = df["First name"].unique()
