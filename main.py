@@ -1,13 +1,15 @@
 import streamlit as st
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", title = 'Transformations')
 
 import pandas as pd
-from Transformations import TransformationRotaReady
+from Transformations import TransformationRotaReady, TransformationFourth
 
 def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
 
-st.title('Transforming RotaReady CSV')
+st.title('Transforming Labour Data CSV')
+
+choice = st.sidebar.radio('Choose an option', ('RotaReady', 'Fourth Single Shifts', 'Fourth Double Shifts'))
 
 uploaded_file = st.sidebar.file_uploader("Choose a file", accept_multiple_files=True)
 expander_original = st.expander("Original CSV")
@@ -17,6 +19,14 @@ if uploaded_file is not None and uploaded_file != []:
         df = combine_dfs([pd.read_csv(file) for file in uploaded_file])
     elif len(uploaded_file) == 1:
         df = pd.read_csv(uploaded_file[0])
+
+    if choice == 'Fourth Single Shifts':
+        df = TransformationFourth(df).transform()
+    elif choice == 'RotaReady':
+        df = df
+    elif choice == 'Fourth Double Shifts'
+        st.warning('Work In Progress')
+        st.stop()
 
     # filter only my first name and last name
     names = df["First name"].unique()
