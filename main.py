@@ -2,7 +2,7 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 import pandas as pd
-from Transformations import TransformationRotaReady, TransformationFourth
+from Transformations import TransformationRotaReady, TransformationFourth, TransformationFourtDOUBLE
 
 def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
