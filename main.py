@@ -25,7 +25,6 @@ if uploaded_file is not None and uploaded_file != []:
     elif choice == 'RotaReady':
         df = df
     elif choice == 'Fourth Double Shifts':
-        st.warning('Work In Progress')
         df = TransformationFourtDOUBLE(df).df
         
 
