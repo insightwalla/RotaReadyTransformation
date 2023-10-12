@@ -49,7 +49,7 @@ if uploaded_file is not None and uploaded_file != []:
     max_date = max_date.date()
 
     # download the csv
-    csv = df.to_csv(index=False)
+    csv = df_transformed.to_csv(index=False)
 
     # craete a download button
 
