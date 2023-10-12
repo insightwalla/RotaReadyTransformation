@@ -42,7 +42,7 @@ if uploaded_file is not None and uploaded_file != []:
 
     df_transformed = TransformationRotaReady(df).df
     expander_final = st.expander("Final CSV", expanded=True)
-    with expander_final
+    with expander_final:
         st.write(df_transformed)
         st.write(len(df_transformed))
 
