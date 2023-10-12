@@ -26,6 +26,7 @@ if uploaded_file is not None and uploaded_file != []:
         df = df
     elif choice == 'Fourth Double Shifts':
         df = TransformationFourtDOUBLE(df).df
+        df = TransformationFourth(df).transform()
         
 
     # filter only my first name and last name
