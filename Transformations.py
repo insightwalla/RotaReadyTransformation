@@ -508,3 +508,40 @@ class TransformationRotaReady:
         self.df = self.transformation4()
         return self.df
 
+
+
+class TransformationFourtDOUBLE:
+    def __init__(self, df):
+        self.df = df
+        self.df = self.transform()
+
+    def cleaning(self):
+        pass
+
+    def transformation1(self):
+        copy_df = self.df
+        df_first_part = copy_df
+        df_second_part = copy_df
+
+        # Prepare the first part
+        df_first_part['ActualStartTime2'] = 0
+        df_first_part['ActualStopTime2'] = 0
+
+        # in the second we can drop actualStartTime1, actualStopTime1 
+        df_second_part = df_second_part.drop(columns=['ActualStartTime1', 'ActualStopTime1'])
+        # now we can change the name of the columns
+        df_second_part = df_second_part.rename(columns={'ActualStartTime2': 'ActualStartTime1'})
+        df_second_part = df_second_part.rename(columns={'ActualStopTime2': 'ActualStopTime1'})
+        # recreate the same columns actual2 
+        df_second_part['ActualStartTime2'] = 0
+        df_second_part['ActualStopTime2'] = 0
+
+        # now we can concatenate the two dataframes
+        self.df = pd.concat([df_first_part, df_second_part], axis=0)
+        self.df = TransformationFourth(self.df).transform()
+        return self.df
+    
+    def transform(self):
+        self.cleaning()
+        self.df = self.transformation1()
+        return self.df
