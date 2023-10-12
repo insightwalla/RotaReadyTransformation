@@ -42,7 +42,9 @@ if uploaded_file is not None and uploaded_file != []:
 
     df_transformed = TransformationRotaReady(df).df
     expander_final = st.expander("Final CSV", expanded=True)
-    expander_final.write(df_transformed)
+    with expander_final
+        st.write(df_transformed)
+        st.write(len(df_transformed))
 
     # transform start to a datetime object
     df["Start"] = pd.to_datetime(df["Start"], format='mixed', dayfirst=True)

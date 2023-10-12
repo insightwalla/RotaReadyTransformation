@@ -529,8 +529,6 @@ class TransformationFourtDOUBLE:
         '''
         # if actualstartime2 is not null then it is a double shift
         double_shifts_df = self.df[self.df['ActualStartTime2'].notna()]
-        st.write(double_shifts_df)
-        st.write(len(double_shifts_df))
 
         am_shifts = double_shifts_df
         def adjust_am_shifts(am_shifts):
@@ -556,7 +554,6 @@ class TransformationFourtDOUBLE:
         pm_shifts = adjust_pm_shifts(pm_shifts)
         all_shifts = pd.concat([am_shifts, pm_shifts])
         self.df = all_shifts
-        st.write(all_shifts)
         return self.df
     
     def transform(self):
