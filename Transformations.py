@@ -516,29 +516,47 @@ class TransformationFourtDOUBLE:
         self.df = self.transform()
 
     def cleaning(self):
-        pass
+        # take off if all the row is nan
+        self.df = self.df[self.df['Home'].notna()]
+
 
     def transformation1(self):
-        copy_df = self.df
-        df_first_part = copy_df
-        df_second_part = copy_df
 
-        # Prepare the first part
-        df_first_part['ActualStartTime2'] = 0
-        df_first_part['ActualStopTime2'] = 0
+        '''
+        1. Divide the single shifts from the double shifts
+        2.
+        
+        '''
+        # if actualstartime2 is not null then it is a double shift
+        double_shifts_df = self.df[self.df['ActualStartTime2'].notna()]
+        st.write(double_shifts_df)
+        st.write(len(double_shifts_df))
 
-        # in the second we can drop actualStartTime1, actualStopTime1 
-        df_second_part = df_second_part.drop(columns=['ActualStartTime1', 'ActualStopTime1'])
-        # now we can change the name of the columns
-        df_second_part = df_second_part.rename(columns={'ActualStartTime2': 'ActualStartTime1'})
-        df_second_part = df_second_part.rename(columns={'ActualStopTime2': 'ActualStopTime1'})
-        # recreate the same columns actual2 
-        df_second_part['ActualStartTime2'] = 0
-        df_second_part['ActualStopTime2'] = 0
+        am_shifts = double_shifts_df
+        def adjust_am_shifts(am_shifts):
+            # just set the actual start time 2 to null
+            am_shifts['ActualStartTime2'] = np.nan
+            # just set the actual stop time 2 to null
+            am_shifts['ActualStopTime2'] = np.nan
+            return am_shifts
+        
+        pm_shifts = double_shifts_df
+        def adjust_pm_shifts(pm_shifts):
+            # assign the actual start time 2 to the actual start time 1
+            pm_shifts['ActualStartTime1'] = pm_shifts['ActualStartTime2']
+            # assign the actual stop time 2 to the actual stop time 1
+            pm_shifts['ActualStopTime1'] = pm_shifts['ActualStopTime2']
 
-        # now we can concatenate the two dataframes
-        self.df = pd.concat([df_first_part, df_second_part], axis=0)
-        self.df = TransformationFourth(self.df).transform()
+            # set the actual start time 2 to null
+            pm_shifts['ActualStartTime2'] = np.nan
+            # set the actual stop time 2 to null
+            pm_shifts['ActualStopTime2'] = np.nan
+            return pm_shifts
+        
+        pm_shifts = adjust_pm_shifts(pm_shifts)
+        all_shifts = pd.concat([am_shifts, pm_shifts])
+        self.df = all_shifts
+        st.write(all_shifts)
         return self.df
     
     def transform(self):
