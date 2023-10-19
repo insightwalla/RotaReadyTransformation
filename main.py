@@ -3,6 +3,7 @@ st.set_page_config(layout="wide")
 
 import pandas as pd
 from Transformations import TransformationRotaReady, TransformationFourth, TransformationFourtDOUBLE
+import numpy as np
 
 def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
@@ -27,7 +28,6 @@ if uploaded_file is not None and uploaded_file != []:
     elif choice == 'Fourth Double Shifts':
         df = TransformationFourtDOUBLE(df).df
         df = TransformationFourth(df).transform()
-        
 
     # filter only my first name and last name
     names = df["First name"].unique()
@@ -39,8 +39,27 @@ if uploaded_file is not None and uploaded_file != []:
         surnames = df["Last name"].unique()
 
     expander_original.write(df)
+    if choice == 'Fourth Single Shifts':
+        df_transformed = TransformationRotaReady(df).df
+    elif choice == 'RotaReady':
+        df_transformed = TransformationRotaReady(df).df
+    elif choice == 'Fourth Double Shifts':
+        # transform start and finish in datetime
+        # craete a unique index
+        df = df.reset_index()
+        df["Start"] = pd.to_datetime(df["Start"], format='mixed', dayfirst=True)
+        df["Finish"] = pd.to_datetime(df["Finish"], format='mixed', dayfirst=True)
+        # recalculate the duration
 
-    df_transformed = TransformationRotaReady(df).df
+        # keep the first 20 columsn
+        df = df.iloc[:, :20]
+
+        df_transformed = TransformationRotaReady(df, False).df
+        # paid hours is the difference between finish and start
+        df_transformed["Paid hours"] = df_transformed["HourEnd"] - df_transformed["HourStart"]
+        df_transformed['TotalHours'] = df_transformed['Paid hours']
+        st.write(df_transformed)
+
     expander_final = st.expander("Final CSV", expanded=True)
     with expander_final:
         st.write(df_transformed)
