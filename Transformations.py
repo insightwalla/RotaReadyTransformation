@@ -595,10 +595,10 @@ class TransformationFourtDOUBLE:
             am_shifts['ActualStartTime2'] = np.nan
             am_shifts['ActualStopTime2'] = np.nan
             return am_shifts
-        st.write('AM Shifts after transformation')
+        #st.write('AM Shifts after transformation')
         am_shifts = adjust_am_shift(am_shifts)
-        st.write(am_shifts)
-        st.write(len(am_shifts))
+        #st.write(am_shifts)
+        #st.write(len(am_shifts))
 
         def adjust_pm_shifts(pm_shifts):
             # assign the actual start time 2 to the actual start time 1
