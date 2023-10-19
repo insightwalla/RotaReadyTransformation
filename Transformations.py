@@ -110,6 +110,8 @@ HoursShift2
 import pandas as pd
 import numpy as np
 import streamlit as st
+import random
+
 
 class TransformationFourth:
     def __init__(self, df):
@@ -193,8 +195,6 @@ class TransformationFourth:
         ]
         self.df = self.df[ordered_cols]
 
-
-
     def transformation1(self):
         # change site appointment skipping the first word
         self.df['Site (appointment)'] = self.df['Site (appointment)'].str.split(' ').str[1:]
@@ -210,6 +210,7 @@ class TransformationFourth:
         # now need to merge the date with the time
         # case 1 - if start_hour < than finish_hour
         # create a hour_start column
+        # transform in string
         self.df['HourStart'] = self.df['Start'].str.split(':').str[0]
         # create a hour_end column
         self.df['HourEnd'] = self.df['Finish'].str.split(':').str[0]
@@ -273,7 +274,8 @@ class TransformationFourth:
 
 import time
 class TransformationRotaReady:
-    def __init__(self, df):
+    def __init__(self, df, with_breaks=True):
+        self.with_breaks = with_breaks
         self.df = df
         self.df = self.transform()
 
@@ -382,6 +384,23 @@ class TransformationRotaReady:
                     elif hour_to_populate == end_hour and minute_to_populate <= min_end:
                         self.df.loc[index, hour_minute] = 1 
 
+            # add the breaks in 
+            allowed_break_hours = [9,10,11,14,15,22,23]
+            half_shift = (end_hour - start_hour)//2
+            median_hour = start_hour + half_shift
+
+            if median_hour in allowed_break_hours:
+                # set median hour and random 15 min interval to 0.33
+                self.df.loc[index, str(median_hour)+":00"] = 0.3
+
+            else:
+                # if isn't in the allowed break hours then set the median hour to 0.5
+                # check the closest allowed break hour between the start and end hour
+                allowed_hours_in_this_case = [hour for hour in allowed_break_hours if hour > start_hour and hour < end_hour]
+                closest_allowed_break_hour = min(allowed_break_hours, key=lambda x:abs(x-median_hour))
+                # set the closest allowed break hour to 0.5
+                self.df.loc[index, str(closest_allowed_break_hour)+":00"] = 0.33
+
         st.info('Transformation 2/4 done - %s seconds' % round((time.time() - start_time)))
         return self.df
 
@@ -408,6 +427,40 @@ class TransformationRotaReady:
                         self.df.loc[index, hour_minute] = 1
                     elif hour_to_populate == end_hour and minute_to_populate <= min_end:
                         self.df.loc[index, hour_minute] = 1 
+
+            if self.with_breaks == True:
+                # add the breaks in 
+                allowed_break_hours = [10,11,14,15,22,23]
+                intervals = [0, 15, 30, 45]
+                allowed_break_hours_minutes = [f"{hour:02d}:{minute:02d}" for hour in allowed_break_hours for minute in intervals]
+                hours_minutes_worked = [hour_minute for hour_minute in hours_minutes if self.df.loc[index, hour_minute] == 1]
+                possible_hour_minutes_breaks = [hour_minute for hour_minute in allowed_break_hours_minutes if hour_minute in hours_minutes_worked]
+                # st.write("hours_minutes_worked")
+                # st.write(hours_minutes_worked)
+                
+                # st.write("possible_hour_minutes_breaks")
+                # st.write(possible_hour_minutes_breaks)
+
+                def get_how_many_break_slots():
+                    if end_hour - start_hour >= 6 and end_hour - start_hour <= 10:
+                        return 1
+                    elif end_hour - start_hour >= 11:
+                        return 3
+                    else:
+                        return 0
+                how_many_slots = get_how_many_break_slots()
+                
+                if how_many_slots > 0:
+                    if how_many_slots == 1:
+                        # set a random 15 min interval to 0.33
+                        random_hour_minute = random.choice(possible_hour_minutes_breaks)
+                        self.df.loc[index, random_hour_minute] = 0
+                    elif how_many_slots == 3:
+                        # set 16 to 17 to 0.33
+                        self.df.loc[index, "16:00"] = 0
+                        self.df.loc[index, "16:15"] = 0
+                        self.df.loc[index, "16:30"] = 0
+                        self.df.loc[index, "16:45"] = 0
 
         st.info('Transformation 2/4 done - %s seconds' % round((time.time() - start_time)))
         return self.df
@@ -530,15 +583,23 @@ class TransformationFourtDOUBLE:
         # if actualstartime2 is not null then it is a double shift
         double_shifts_df = self.df[self.df['ActualStartTime2'].notna()]
 
-        am_shifts = double_shifts_df
-        def adjust_am_shifts(am_shifts):
-            # just set the actual start time 2 to null
+        am_shifts = double_shifts_df.copy()
+
+        
+        st.write("AM Shifts before transformation")   
+        st.write(am_shifts)     
+
+        pm_shifts = double_shifts_df.copy()
+        def adjust_am_shift(am_shifts):
+            # set the second part to to np.nan
             am_shifts['ActualStartTime2'] = np.nan
-            # just set the actual stop time 2 to null
             am_shifts['ActualStopTime2'] = np.nan
             return am_shifts
-        
-        pm_shifts = double_shifts_df
+        st.write('AM Shifts after transformation')
+        am_shifts = adjust_am_shift(am_shifts)
+        st.write(am_shifts)
+        st.write(len(am_shifts))
+
         def adjust_pm_shifts(pm_shifts):
             # assign the actual start time 2 to the actual start time 1
             pm_shifts['ActualStartTime1'] = pm_shifts['ActualStartTime2']
@@ -551,9 +612,13 @@ class TransformationFourtDOUBLE:
             pm_shifts['ActualStopTime2'] = np.nan
             return pm_shifts
         
+        
         pm_shifts = adjust_pm_shifts(pm_shifts)
         all_shifts = pd.concat([am_shifts, pm_shifts])
         self.df = all_shifts
+        # add date from start
+        self.df = all_shifts
+
         return self.df
     
     def transform(self):
