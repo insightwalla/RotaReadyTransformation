@@ -1,110 +1,12 @@
 ''' 
-rota_ready_columns = [
- 'ID',
-    'HR ID',
-    'Payroll ID',
-    'First name',
-    'Last name',
-    'Site (appointment)',
-    'Department (appointment)',
-    'Event type',
-    'Shift type',
-    'Site (attribution)',
-    'Department (attribution)',
-    'Start',
-    'Finish',
-    'Paid hours',
-    'Unpaid hours',
-    'Base pay',
-    'Accrued holiday',
-    'Taxes',
-    'Wage uplift',
-    'Total cost',
-    'HourStart',
-    'HourEnd',
-    'TotalHours',
-    'EndMinutes',
-    'StartMinutes',
-    '04:00',
-    '04:15',
-    '04:30',
-    '04:45',
-    '05:00',
-    '05:15',
-    '05:30',
-    '05:45',
-    '06:00',
-    '06:15',
-    '06:30',
-    '06:45',
-    '07:00',
-    '07:15',
-    '07:30',
-    '07:45',
-    '08:00',
-    '08:15',
-    ....
-    '23:45',
-    '24:00:00',
-    '24:15:00',
-    '24:30:00',
-    '24:45:00',
-    '25:00:00',
-    '25:15:00',
-    '25:30:00',
-    '25:45:00', 
-    '26:00:00',
-    '26:15:00',
-    '26:30:00',
-    '26:45:00',
-    
-    ...
-    'Day of the week',
-    'Closing time',
-    'TotalMinutesAfterClosingTime'
+This script prepare the export from RotaReady to be ingested in the PowerBi Dataset Model on top of which
+the PowerBi Dashboard is built.
 
+There are 3 Different Classes that perform the same operations - receiveing different inputs.
 
-]
-Home
-Cost code
-Division
-Job Grade
-Job Title
-Pay Rate
-Employee Number
-First Name
-Surname
-Contract
-Shift date
-Day of the week
-Rota/Forecast StartTime1
-Rota/Forecast StopTime1
-Rota/Forecast StartTime2
-Rota/Forecast StopTime2
-Rota/Forecast Hours
-Paid/Actual StartTime1
-Paid/Actual StopTime1
-Paid/Actual StartTime2
-Paid/Actual StopTime2
-Paid/Actual Hours
-Worked/T&A StartTime1
-Worked/T&A StopTime1
-Worked/T&A StartTime2
-Worked/T&A StopTime2
-Worked/T&A Hours
-Contracted Hours
-ActualStartTime1
-ActualStopTime1
-HoursShift1
-BreakTime as Percentage of Shift
-BreakTime as Percentage of Hour
-BreakTime as Minutes
-Middle Hour
-Break Hour?
-Break Hour
-ActualStartTime2
-ActualStopTime2
-HoursShift2
+1. Transforming Data from RotaReady
+2. Transforming Data from Fourth (Single Shifts)
+3. Transforming Data from Fourth (Double Shifts)
 '''
 
 import pandas as pd
@@ -480,7 +382,10 @@ class TransformationRotaReady:
             'Dishoom Manchester': 'D7',
             'Dishoom Edinburgh': 'D5',
             'Dishoom Birmingham': 'D8',
-            'Dishoom Canary Wharf': 'D9'
+            'Dishoom Canary Wharf': 'D9',
+
+            'Dishoom Brighton Permit Room': 'PR1',
+            'Dishoom Battersea': 'D10',
         }
 
         self.df["Site (appointment)"] = self.df["Site (appointment)"].replace(res_to_rename)
@@ -529,6 +434,8 @@ class TransformationRotaReady:
             'D7': group_1_closing_schema,
             'D8': group_1_closing_schema,
             'D9': group_1_closing_schema,
+            'PR1': group_1_closing_schema,
+            'D10': group_1_closing_schema,
         }
 
         self.df['Closing time'] = self.df.apply(lambda x: res_[x['Site (appointment)']][x['Day of the week']], axis=1)
@@ -561,8 +468,6 @@ class TransformationRotaReady:
         self.df = self.transformation4()
         return self.df
 
-
-
 class TransformationFourtDOUBLE:
     def __init__(self, df):
         self.df = df
@@ -571,7 +476,6 @@ class TransformationFourtDOUBLE:
     def cleaning(self):
         # take off if all the row is nan
         self.df = self.df[self.df['Home'].notna()]
-
 
     def transformation1(self):
 
