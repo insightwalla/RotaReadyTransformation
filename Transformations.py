@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import random
-
+import time
 
 class TransformationFourth:
     def __init__(self, df):
@@ -174,7 +174,6 @@ class TransformationFourth:
 
         return self.df
 
-import time
 class TransformationRotaReady:
     def __init__(self, df, with_breaks=True):
         self.with_breaks = with_breaks
