@@ -353,9 +353,12 @@ class TransformationRotaReady:
                 
                 if how_many_slots > 0:
                     if how_many_slots == 1:
-                        # set a random 15 min interval to 0.33
-                        random_hour_minute = random.choice(possible_hour_minutes_breaks)
-                        self.df.loc[index, random_hour_minute] = 0
+                        try:
+                            # set a random 15 min interval to 0.33
+                            random_hour_minute = random.choice(possible_hour_minutes_breaks)
+                            self.df.loc[index, random_hour_minute] = 0
+                        except:
+                            pass
                     elif how_many_slots == 3:
                         # set 16 to 17 to 0.33
                         self.df.loc[index, "16:00"] = 0
