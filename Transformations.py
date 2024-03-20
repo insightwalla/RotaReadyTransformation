@@ -195,178 +195,130 @@ class TransformationRotaReady:
         '''
         '''
         start_time = time.time()
-        # add HourStart and HourEnd columns after transforming the date columns dayfirst=True
-        # change the date format to datetime
+        #1. Transform start and finish
         self.df["Start"] = pd.to_datetime(self.df["Start"], format='mixed', dayfirst=True)
         self.df["Finish"] = pd.to_datetime(self.df["Finish"], format = 'mixed', dayfirst=True)
                                                # create a column for paid hours
-        
+        #2. Get start hour and end hour
         self.df["HourStart"] = self.df["Start"].dt.hour
         self.df["HourEnd"] = self.df["Finish"].dt.hour 
-        # new colum total hours (summing paid and unpaid hours)
-        # as float
+        #3. Transform the values in float and calculate the paid hours
         self.df["Paid hours"] = self.df["Paid hours"].astype(float)
         self.df["Unpaid hours"] = self.df["Unpaid hours"].astype(float)
         self.df["TotalHours"] = self.df["Paid hours"] + self.df["Unpaid hours"]
-        # keep only more than 0.5 hours and less than 15 hours
+        #4. Keep only more than 0.5 hours and less than 15 hours
         self.df = self.df[(self.df["TotalHours"] > 0.5) & (self.df["TotalHours"] < 15)]
-
-        # get min hour from start
         self.min_hour = 4
-        # modify end time if end time is less than start time
-        #self.df["HourEnd"] = self.df["HourEnd"].apply(lambda x: x+24 if x < self.min_hour else x)
         self.df["HourEnd"] = np.where(self.df["HourEnd"] < self.min_hour, self.df["HourEnd"] + 24, self.df["HourEnd"])
-        # get max hour from end
         self.max_hour = self.df["HourEnd"].max()
+        choices = ['00', '15', '30']
 
         # create a minute_end column taking only the minute from the end time
         self.df["EndMinutes"] = pd.to_datetime(self.df["Finish"],format = 'mixed', dayfirst=True).dt.minute
-        # round the end minutes to 0 - 15 - 30 - 45 minutes
-        # self.df["EndMinutes"] = self.df["EndMinutes"].apply(lambda x: 
-        #                                                     0 if x <= 8 
-        #                                                     else 15 if x > 8 and x <= 23 
-        #                                                     else 30 if x > 23 and x <= 38 
-        #                                                     else 45) 
-        
-        # import numpy as np
-
-        conditions = [
+        conditions_end = [
             self.df["EndMinutes"] <= 8,
             (self.df["EndMinutes"] > 8) & (self.df["EndMinutes"] <= 23),
             (self.df["EndMinutes"] > 23) & (self.df["EndMinutes"] <= 38)
         ]
-        choices = [0, 15, 30]
-        self.df["EndMinutes"] = np.select(conditions, choices, default=45)
-        # create a minute_start column taking only the minute from the start time
+        self.df["EndMinutes"] = np.select(conditions_end, choices, default='45')
+
+
         self.df["StartMinutes"] = pd.to_datetime(self.df["Start"],format = 'mixed', dayfirst=True).dt.minute
-        # round the start minutes to 0 - 15 - 30 - 45 minutes
-        # self.df["StartMinutes"] = self.df["StartMinutes"].apply(lambda x:
-        #                                                         0 if x <= 8
-        #                                                         else 15 if x > 8 and x <= 23
-        #                                                         else 30 if x > 23 and x <= 38
-        #                                                         else 45)
-        
-        conditions = [
+        conditions_start = [
             self.df["StartMinutes"] <= 8,
             (self.df["StartMinutes"] > 8) & (self.df["StartMinutes"] <= 23),
             (self.df["StartMinutes"] > 23) & (self.df["StartMinutes"] <= 38)
         ]
-        choices = [0, 15, 30]
-        self.df["StartMinutes"] = np.select(conditions, choices, default=45)
+        choices = ['00','15','30']
+        self.df["StartMinutes"] = np.select(conditions_start, choices, default=45)
         st.info('Transformation 1/4 done - %s seconds' % round((time.time() - start_time)))
         return self.df
 
     def transformation2(self):
         start_time = time.time()
-        # now need to create a column for each hour and each 15 minutes
-        # create a list of hours
         hours = list(range(self.min_hour,self.max_hour+1))
-        # create a list of minutes
         minutes = ['00','15','30','45']
-        # create a list of hours and minutes
+        columns = ['HourStart','StartMinutes','Start', 'HourEnd', 'EndMinutes', 'Finish']
         hours_minutes = [str(hour)+":"+str(minute) for hour in hours for minute in minutes]
-        # create a column for each hour and each 15 minutes
         self.df = pd.concat([self.df, pd.DataFrame(0, index=self.df.index, columns=hours_minutes)], axis=1)
-        # or simply
-        #self.df[hours_minutes] = 0
-        # populate the columns with 1 if the shift is in that hour and minute
         for index, row in self.df.iterrows():
             #get start hour and end hour
             start_hour = row["HourStart"]
+            min_start = row['StartMinutes']
             end_hour = row["HourEnd"]
             min_end = row["EndMinutes"]
-            for hour_minute in hours_minutes:
-                # check if the hour is between start and end
-                hour_to_populate = int(hour_minute.split(":")[0])
-                minute_to_populate = int(hour_minute.split(":")[1])
-                if start_hour < end_hour:
-                    if hour_to_populate >= start_hour and hour_to_populate < end_hour:
-                        self.df.loc[index, hour_minute] = 1
-                    elif hour_to_populate == end_hour and minute_to_populate <= min_end:
-                        self.df.loc[index, hour_minute] = 1 
+            if start_hour < self.min_hour:
+                start_hour += 24
+            try:
+                start_column_index = self.df.columns.get_loc(f"{start_hour}:{str(min_start).zfill(2)}")
+            except: 
+                st.write(row)
+                st.stop()
+            end_column_index = self.df.columns.get_loc(f"{end_hour}:{str(min_end).zfill(2)}")
 
-            # add the breaks in 
-            allowed_break_hours = [9,10,11,14,15,22,23]
-            half_shift = (end_hour - start_hour)//2
-            median_hour = start_hour + half_shift
+            columns = self.df.columns[start_column_index:end_column_index]
+            self.df.loc[index, columns] = 1
 
-            if median_hour in allowed_break_hours:
-                # set median hour and random 15 min interval to 0.33
-                self.df.loc[index, str(median_hour)+":00"] = 0.3
+            if self.df.loc[index,'Unpaid hours'] > 0 : 
+                allowed_break_hours = [9,10,11,14,15,22,23]
+                half_shift = (end_hour - start_hour)//2
+                median_hour = start_hour + half_shift
 
-            else:
-                # if isn't in the allowed break hours then set the median hour to 0.5
-                # check the closest allowed break hour between the start and end hour
-                allowed_hours_in_this_case = [hour for hour in allowed_break_hours if hour > start_hour and hour < end_hour]
-                closest_allowed_break_hour = min(allowed_break_hours, key=lambda x:abs(x-median_hour))
-                # set the closest allowed break hour to 0.5
-                self.df.loc[index, str(closest_allowed_break_hour)+":00"] = 0.33
+                if median_hour in allowed_break_hours:
+                    # set median hour and random 15 min interval to 0.33
+                    self.df.loc[index, str(median_hour)+":00"] = 0
+
+                else:
+                    # if isn't in the allowed break hours then set the median hour to 0.5
+                    # check the closest allowed break hour between the start and end hour
+                    allowed_hours_in_this_case = [hour for hour in allowed_break_hours if hour > start_hour and hour < end_hour]
+                    closest_allowed_break_hour = min(allowed_break_hours, key=lambda x:abs(x-median_hour))
+                    # set the closest allowed break hour to 0.5
+                    self.df.loc[index, str(closest_allowed_break_hour)+":00"] = 0
 
         st.info('Transformation 2/4 done - %s seconds' % round((time.time() - start_time)))
+        st.write(self.df)
         return self.df
-
-    def new_transformation2(self):
+    
+    def transformation2_(self):
         start_time = time.time()
-        # create a 2D grid of hours and minutes
-        hours = np.arange(self.min_hour, self.max_hour+1)
-        minutes = np.array([0, 15, 30, 45])
-        # reshape the grid into a 1D array of strings
-        hours_minutes = [f"{hour:02d}:{minute:02d}" for hour in hours for minute in minutes]        # create a column for each hour and each 15 minutes
-        self.df[hours_minutes] = 0
-        # populate the columns with 1 if the shift is in that hour and minute
-        for index, row in self.df.iterrows():
+        hours = list(range(self.min_hour,self.max_hour+1))
+        minutes = ['00','15','30','45']
+        columns = ['HourStart','StartMinutes','Start', 'HourEnd', 'EndMinutes', 'Finish']
+        hours_minutes = [str(hour)+":"+str(minute) for hour in hours for minute in minutes]
+        self.df = pd.concat([self.df, pd.DataFrame(0, index=self.df.index, columns=hours_minutes)], axis=1)
+        for row in self.df.itertuples():
             #get start hour and end hour
-            start_hour = row["HourStart"]
-            end_hour = row["HourEnd"]
-            min_end = row["EndMinutes"]
-            for hour_minute in hours_minutes:
-                # check if the hour is between start and end
-                hour_to_populate = int(hour_minute.split(":")[0])
-                minute_to_populate = int(hour_minute.split(":")[1])
-                if start_hour < end_hour:
-                    if hour_to_populate >= start_hour and hour_to_populate < end_hour:
-                        self.df.loc[index, hour_minute] = 1
-                    elif hour_to_populate == end_hour and minute_to_populate <= min_end:
-                        self.df.loc[index, hour_minute] = 1 
+            start_hour = getattr(row, "HourStart")
+            min_start = getattr(row, 'StartMinutes')
+            end_hour = getattr(row, "HourEnd")
+            min_end = getattr(row, "EndMinutes")
 
-            if self.with_breaks == True:
-                # add the breaks in 
-                allowed_break_hours = [10,11,14,15,22,23]
-                intervals = [0, 15, 30, 45]
-                allowed_break_hours_minutes = [f"{hour:02d}:{minute:02d}" for hour in allowed_break_hours for minute in intervals]
-                hours_minutes_worked = [hour_minute for hour_minute in hours_minutes if self.df.loc[index, hour_minute] == 1]
-                possible_hour_minutes_breaks = [hour_minute for hour_minute in allowed_break_hours_minutes if hour_minute in hours_minutes_worked]
-                # st.write("hours_minutes_worked")
-                # st.write(hours_minutes_worked)
-                
-                # st.write("possible_hour_minutes_breaks")
-                # st.write(possible_hour_minutes_breaks)
+            start_column_index = self.df.columns.get_loc(f"{start_hour}:{str(min_start).zfill(2)}")
+            end_column_index = self.df.columns.get_loc(f"{end_hour}:{str(min_end).zfill(2)}")
 
-                def get_how_many_break_slots():
-                    if end_hour - start_hour >= 6 and end_hour - start_hour <= 10:
-                        return 1
-                    elif end_hour - start_hour >= 11:
-                        return 3
-                    else:
-                        return 0
-                how_many_slots = get_how_many_break_slots()
-                
-                if how_many_slots > 0:
-                    if how_many_slots == 1:
-                        try:
-                            # set a random 15 min interval to 0.33
-                            random_hour_minute = random.choice(possible_hour_minutes_breaks)
-                            self.df.loc[index, random_hour_minute] = 0
-                        except:
-                            pass
-                    elif how_many_slots == 3:
-                        # set 16 to 17 to 0.33
-                        self.df.loc[index, "16:00"] = 0
-                        self.df.loc[index, "16:15"] = 0
-                        self.df.loc[index, "16:30"] = 0
-                        self.df.loc[index, "16:45"] = 0
+            columns = self.df.columns[start_column_index:end_column_index]
+            self.df.loc[row.Index, columns] = 1
+
+            if end_hour - start_hour >=6:
+                allowed_break_hours = [9,10,11,14,15,22,23]
+                half_shift = (end_hour - start_hour)//2
+                median_hour = start_hour + half_shift
+
+                if median_hour in allowed_break_hours:
+                    # set median hour and random 15 min interval to 0.33
+                    self.df.loc[row.Index, str(median_hour)+":00"] = 0
+
+                else:
+                    # if isn't in the allowed break hours then set the median hour to 0.5
+                    # check the closest allowed break hour between the start and end hour
+                    allowed_hours_in_this_case = [hour for hour in allowed_break_hours if hour > start_hour and hour < end_hour]
+                    closest_allowed_break_hour = min(allowed_break_hours, key=lambda x:abs(x-median_hour))
+                    # set the closest allowed break hour to 0.5
+                    self.df.loc[row.Index, str(closest_allowed_break_hour)+":00"] = 0
 
         st.info('Transformation 2/4 done - %s seconds' % round((time.time() - start_time)))
+        st.write(self.df)
         return self.df
     
     def transformation3(self):
@@ -453,7 +405,7 @@ class TransformationRotaReady:
                 return x['EndMinutes']
             # case 2
             elif x['HourEnd'] > x['Closing time']:
-                return ((x['HourEnd'] - x['Closing time'])*60) + x['EndMinutes']
+                return ((x['HourEnd'] - x['Closing time'])*60) + int(x['EndMinutes'])
             # case 3
             elif x['HourEnd'] < x['Closing time']:
                 return 0
@@ -465,7 +417,7 @@ class TransformationRotaReady:
     def transform(self):
         self.cleaning()
         self.df = self.transformation1()
-        self.df = self.new_transformation2()
+        self.df = self.transformation2()
         self.df = self.transformation3()
         self.df = self.transformation4()
         return self.df
