@@ -230,6 +230,7 @@ class TransformationRotaReady:
             (self.df["StartMinutes"] > 23) & (self.df["StartMinutes"] <= 38)
         ]
         choices = ['00','15','30']
+        choices = [int(i) for i in choices]
         self.df["StartMinutes"] = np.select(conditions_start, choices, default=45)
         st.info('Transformation 1/4 done - %s seconds' % round((time.time() - start_time)))
         return self.df
