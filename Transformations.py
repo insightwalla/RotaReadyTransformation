@@ -193,6 +193,9 @@ class TransformationRotaReady:
 
     def transformation1(self):
         '''
+        1. Tranform Start and finish to dates 
+        2. Decompose the Start and End time to get minutes and hours
+        3.
         '''
         start_time = time.time()
         #1. Transform start and finish
@@ -230,7 +233,8 @@ class TransformationRotaReady:
             (self.df["StartMinutes"] > 23) & (self.df["StartMinutes"] <= 38)
         ]
         choices = ['00','15','30']
-        choices = [int(i) for i in choices]
+        # as int
+        choices = [int(i) for i in choices] 
         self.df["StartMinutes"] = np.select(conditions_start, choices, default=45)
         st.info('Transformation 1/4 done - %s seconds' % round((time.time() - start_time)))
         return self.df
@@ -248,13 +252,16 @@ class TransformationRotaReady:
             min_start = row['StartMinutes']
             end_hour = row["HourEnd"]
             min_end = row["EndMinutes"]
+            # transform to int 
+            start_hour = int(start_hour)
+            end_hour = int(end_hour)
             if start_hour < self.min_hour:
                 start_hour += 24
             try:
                 start_column_index = self.df.columns.get_loc(f"{start_hour}:{str(min_start).zfill(2)}")
             except: 
                 st.write(row)
-                st.stop()
+                continue
             end_column_index = self.df.columns.get_loc(f"{end_hour}:{str(min_end).zfill(2)}")
 
             columns = self.df.columns[start_column_index:end_column_index]
@@ -340,6 +347,7 @@ class TransformationRotaReady:
             'Dishoom Canary Wharf': 'D9',
 
             'Dishoom Brighton Permit Room': 'PR1',
+            'Dishoom Cambridge Permit Room' : 'PR2',
             'Dishoom Battersea': 'D10',
         }
 
@@ -389,8 +397,9 @@ class TransformationRotaReady:
             'D7': group_1_closing_schema,
             'D8': group_1_closing_schema,
             'D9': group_1_closing_schema,
-            'PR1': group_1_closing_schema,
             'D10': group_1_closing_schema,
+            'PR1': group_1_closing_schema,
+            'PR2': group_1_closing_schema
         }
 
         self.df['Closing time'] = self.df.apply(lambda x: res_[x['Site (appointment)']][x['Day of the week']], axis=1)
