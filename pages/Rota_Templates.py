@@ -68,7 +68,7 @@ def show_templates(df_A, df_B, df_C, df_D, df_E, df_F, df_rota_lookup):
     expanders = ['All', 'Rota A', 'Rota B', 'Rota C', 'Rota D', 'Rota E', 'Rota F', '2024RotaLookup']
     for i, df in enumerate(list_of_df):
         if 'Hours' in df.columns:
-            with st.expander(f"{expanders[i]} / Total Hours: {df['Hours'].sum()}"):
+            with st.expander(f"{expanders[i]} / Total Hours: **{df['Hours'].sum()}**"):
                 st.dataframe(df)
         else: 
             with st.expander(f"{expanders[i]}"):
@@ -159,7 +159,7 @@ if st.checkbox("Process"):
 
     st.session_state[f'df_{cafe}'] = pd.DataFrame(data) 
     if week == weeks[-1]:
-            empty_space.success(f"Tranformation Completed : Time Taken: {time.time() - start_time}")
+            empty_space.success(f"Tranformation Completed : Time Taken: **{round(time.time() - start_time, 2)}**")
     with st.container(border=True):
         with st.expander('Final Data Transformed'):
             st.dataframe(st.session_state[f'df_{cafe}'], use_container_width=True)
