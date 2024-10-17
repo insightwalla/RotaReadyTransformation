@@ -163,6 +163,13 @@ if st.checkbox("Process"):
     with st.container(border=True):
         st.dataframe(st.session_state[f'df_{cafe}'], use_container_width=True)
 
+        # add download button 
+        st.download_button(
+            label="Download Data",
+            data=st.session_state[f'df_{cafe}'].to_csv(index=False),
+            file_name=f"{cafe}_Rota_Transformation.csv",
+            mime="text/csv"
+        )
         # No create a dataframe grouped by Week and Sum Quarter Hours but first transform the data into float
         df_grouped = st.session_state[f'df_{cafe}'].copy()
         df_grouped['RotaQuarterHours'] = df_grouped['RotaQuarterHours'].astype(float)
