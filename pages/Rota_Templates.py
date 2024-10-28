@@ -173,21 +173,21 @@ if st.checkbox("Process"):
             )
 
         st.divider()
-        st.subheader('Checks')
-        # No create a dataframe grouped by Week and Sum Quarter Hours but first transform the data into float
-        df_grouped = st.session_state[f'df_{cafe}'].copy()
-        df_grouped['RotaQuarterHours'] = df_grouped['RotaQuarterHours'].astype(float)
-        # Group By Week, Sum Quarter Hours and Keep Rota Letter 
-        df_grouped = df_grouped.groupby(['Week', 'Rota_24'])['RotaQuarterHours'].sum().reset_index()
-        df_grouped['Hours'] = df_grouped['RotaQuarterHours'] / 4
-        st.dataframe(df_grouped, use_container_width=True)
-        st.write(f"Total Hours for {cafe} is {df_grouped['Hours'].sum() * 4}")
-        st.divider()    
+        with st.expander('Checks'):
+            # No create a dataframe grouped by Week and Sum Quarter Hours but first transform the data into float
+            df_grouped = st.session_state[f'df_{cafe}'].copy()
+            df_grouped['RotaQuarterHours'] = df_grouped['RotaQuarterHours'].astype(float)
+            # Group By Week, Sum Quarter Hours and Keep Rota Letter 
+            df_grouped = df_grouped.groupby(['Week', 'Rota_24'])['RotaQuarterHours'].sum().reset_index()
+            df_grouped['Hours'] = df_grouped['RotaQuarterHours'] / 4
+            st.dataframe(df_grouped, use_container_width=True)
+            st.write(f"Total Hours for {cafe} is {df_grouped['Hours'].sum() * 4}")
+            st.divider()    
 
-        # add the same but with departemnts as wel
+            # add the same but with departemnts as wel
 
-        df_grouped_department_Week_rota_letter = st.session_state[f'df_{cafe}'].copy()
-        df_grouped_department_Week_rota_letter['RotaQuarterHours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'].astype(float)
-        df_grouped_department_Week_rota_letter = df_grouped_department_Week_rota_letter.groupby(['Week', 'Rota_24', 'Department'])['RotaQuarterHours'].sum().reset_index()
-        df_grouped_department_Week_rota_letter['Hours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'] / 4
-        st.dataframe(df_grouped_department_Week_rota_letter, use_container_width=True)
+            df_grouped_department_Week_rota_letter = st.session_state[f'df_{cafe}'].copy()
+            df_grouped_department_Week_rota_letter['RotaQuarterHours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'].astype(float)
+            df_grouped_department_Week_rota_letter = df_grouped_department_Week_rota_letter.groupby(['Week', 'Rota_24', 'Department'])['RotaQuarterHours'].sum().reset_index()
+            df_grouped_department_Week_rota_letter['Hours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'] / 4
+            st.dataframe(df_grouped_department_Week_rota_letter, use_container_width=True)
