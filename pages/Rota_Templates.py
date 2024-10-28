@@ -161,16 +161,15 @@ if st.checkbox("Process"):
     if week == weeks[-1]:
             empty_space.success(f"Tranformation Completed : Time Taken: **{round(time.time() - start_time, 2)}**")
     with st.container(border=True):
-        with st.expander('Final Data Transformed'):
-            st.dataframe(st.session_state[f'df_{cafe}'], use_container_width=True)
+        st.dataframe(st.session_state[f'df_{cafe}'], use_container_width=True)
 
-            # add download button 
-            st.download_button(
-                label="Download Data",
-                data=st.session_state[f'df_{cafe}'].to_csv(index=False),
-                file_name=f"{cafe}_Rota_Transformation.csv",
-                mime="text/csv"
-            )
+        # add download button 
+        st.download_button(
+            label="Download Data",
+            data=st.session_state[f'df_{cafe}'].to_csv(index=False),
+            file_name=f"{cafe}_Rota_Transformation.csv",
+            mime="text/csv"
+        )
 
         st.divider()
         with st.expander('Checks'):
