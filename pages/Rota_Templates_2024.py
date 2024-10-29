@@ -43,19 +43,19 @@ def _init_session_state():
         st.session_state.final_df_whole = pd.DataFrame(columns=[
             'Cafe', 'Week', 'Dow', 'Time_Interval', 
             'Time_Interval_15_min', 'Department', 
-            'Rota_24', 'RotaQuarterHours'])
+            'Rota', 'RotaQuarterHours', 'Year'])
         
     if 'df_whole' not in st.session_state:
         st.session_state.df_whole = pd.DataFrame(columns=[
             'Cafe', 'Week', 'Dow', 'Time_Interval', 
             'Time_Interval_15_min', 'Department', 
-            'Rota_24', 'RotaQuarterHours'])
+            'Rota', 'RotaQuarterHours', 'Year'])
 
     if 'df_filtered' not in st.session_state:
         st.session_state.df_filtered = pd.DataFrame(columns=[
             'Cafe', 'Week', 'Dow', 'Time_Interval', 
             'Time_Interval_15_min', 'Department', 
-            'Rota_24', 'RotaQuarterHours'])
+            'Rota', 'RotaQuarterHours', 'Year'])
     
 def show_templates(df_A, df_B, df_C, df_D, df_E, df_F, df_rota_lookup):
     all_df_comb = pd.concat([df_A, df_B, df_C, df_D, df_E, df_F], axis=0)
@@ -119,7 +119,7 @@ if st.checkbox("Process"):
     weeks, dows = get_weeks_and_dow()
     fifteen_minutes_intervals = get_15_min_intervals()
     rota_letters = [ df_rota_lookup[df_rota_lookup['Week'] == i][str(cafe).strip()].values[0] for i in range(1, 53)]
-    individual_cafe_final_transforamtion = pd.DataFrame(columns=['Cafe', 'Week', 'Dow', 'Time_Interval', 'Time_Interval_15_min', 'Department', 'Rota_24', 'RotaQuarterHours'])
+    individual_cafe_final_transforamtion = pd.DataFrame(columns=['Cafe', 'Week', 'Dow', 'Time_Interval', 'Time_Interval_15_min', 'Department', 'Rota', 'RotaQuarterHours','Year'])
     
     start_time = time.time() 
     empty = st.empty()
@@ -144,8 +144,9 @@ if st.checkbox("Process"):
                         'Time_Interval': int(str(interval).split(':')[0]),
                         'Time_Interval_15_min': interval,
                         'Department': division,
-                        'Rota_24': rota_letters[week-1],
-                        'RotaQuarterHours': rota_template[interval].sum()
+                        'Rota': rota_letters[week-1],
+                        'RotaQuarterHours': rota_template[interval].sum(),
+                        'Year' : 2024
                     }
                     data.append(entry)
 
@@ -169,7 +170,7 @@ if st.checkbox("Process"):
             df_grouped = st.session_state[f'df_{cafe}'].copy()
             df_grouped['RotaQuarterHours'] = df_grouped['RotaQuarterHours'].astype(float)
             # Group By Week, Sum Quarter Hours and Keep Rota Letter 
-            df_grouped = df_grouped.groupby(['Week', 'Rota_24'])['RotaQuarterHours'].sum().reset_index()
+            df_grouped = df_grouped.groupby(['Week', 'Rota'])['RotaQuarterHours'].sum().reset_index()
             df_grouped['Hours'] = df_grouped['RotaQuarterHours'] / 4
             st.dataframe(df_grouped, use_container_width=True)
             st.write(f"Total Hours for {cafe} is {df_grouped['Hours'].sum() * 4}")
@@ -178,6 +179,6 @@ if st.checkbox("Process"):
             # add the same but with departemnts as well
             df_grouped_department_Week_rota_letter = st.session_state[f'df_{cafe}'].copy()
             df_grouped_department_Week_rota_letter['RotaQuarterHours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'].astype(float)
-            df_grouped_department_Week_rota_letter = df_grouped_department_Week_rota_letter.groupby(['Week', 'Rota_24', 'Department'])['RotaQuarterHours'].sum().reset_index()
+            df_grouped_department_Week_rota_letter = df_grouped_department_Week_rota_letter.groupby(['Week', 'Rota', 'Department'])['RotaQuarterHours'].sum().reset_index()
             df_grouped_department_Week_rota_letter['Hours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'] / 4
             st.dataframe(df_grouped_department_Week_rota_letter, use_container_width=True)
