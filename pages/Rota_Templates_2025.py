@@ -119,7 +119,7 @@ if st.checkbox("Process"):
     weeks, dows = get_weeks_and_dow()
     fifteen_minutes_intervals = get_15_min_intervals()
     rota_letters = [ df_rota_lookup[df_rota_lookup['Week'] == i][str(cafe).strip()].values[0] for i in range(1, 53)]
-    individual_cafe_final_transforamtion = pd.DataFrame(columns=['Cafe', 'Week', 'Dow', 'Time_Interval', 'Time_Interval_15_min', 'Department', 'Rota_24', 'RotaQuarterHours'])
+    individual_cafe_final_transforamtion = pd.DataFrame(columns=['Cafe', 'Week', 'Dow', 'Time_Interval', 'Time_Interval_15_min', 'Department', 'Rota_25', 'RotaQuarterHours'])
     
     start_time = time.time() 
     empty = st.empty()

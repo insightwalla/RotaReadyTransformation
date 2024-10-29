@@ -21,18 +21,13 @@ class TransformationTemplates:
 def handle_single_file(file):
     file_name = file.name
     cafe = file_name.split('-')[1].split('_')[0]
-    df_A = pd.read_excel(file, sheet_name='24_A')
-    df_B = pd.read_excel(file, sheet_name='24_B')
-    df_C = pd.read_excel(file, sheet_name='24_C')
-    df_D = pd.read_excel(file, sheet_name='24_D')
-    df_E = pd.read_excel(file, sheet_name='24_E')
-    df_F = pd.read_excel(file, sheet_name='24_F')
+    df_A = pd.read_excel(file, sheet_name='Rota_A_24')
+    df_B = pd.read_excel(file, sheet_name='Rota_B_24')
+    df_C = pd.read_excel(file, sheet_name='Rota_C_24')
+    df_D = pd.read_excel(file, sheet_name='Rota_D_24')
+    df_E = pd.read_excel(file, sheet_name='Rota_E_24')
+    df_F = pd.read_excel(file, sheet_name='Rota_F_24')
     df_rota_lookup = pd.read_excel(file, sheet_name='2024RotaLookup')
-    df_rota_lookup = df_rota_lookup.T
-    df_rota_lookup = df_rota_lookup.drop(columns=[1,3], errors='ignore')
-    df_rota_lookup = df_rota_lookup.reset_index()
-    df_rota_lookup.columns = df_rota_lookup.iloc[0]
-    df_rota_lookup = df_rota_lookup.drop(0)
     tt = TransformationTemplates([df_A, df_B, df_C, df_D, df_E, df_F])
     df_A, df_B, df_C, df_D, df_E, df_F = tt.cleanup()
     df_A['Rota'] = 'A'
@@ -68,7 +63,7 @@ def show_templates(df_A, df_B, df_C, df_D, df_E, df_F, df_rota_lookup):
     expanders = ['All', 'Rota A', 'Rota B', 'Rota C', 'Rota D', 'Rota E', 'Rota F', '2024RotaLookup']
     for i, df in enumerate(list_of_df):
         if 'Hours' in df.columns:
-            with st.expander(f"{expanders[i]} / Total Hours: **{df['Hours'].sum()}**"):
+            with st.expander(f"{expanders[i]} / Total Hours: {df['Hours'].sum()}"):
                 st.dataframe(df)
         else: 
             with st.expander(f"{expanders[i]}"):
@@ -123,8 +118,7 @@ if st.checkbox("Process"):
     unique_departments = get_uniques(df_final)
     weeks, dows = get_weeks_and_dow()
     fifteen_minutes_intervals = get_15_min_intervals()
-    rota_letters = [ df_rota_lookup[df_rota_lookup['Week'] == i]['2024 Final Rota'].values[0] for i in range(1, 53)]
-    
+    rota_letters = [ df_rota_lookup[df_rota_lookup['Week'] == i][str(cafe).strip()].values[0] for i in range(1, 53)]
     individual_cafe_final_transforamtion = pd.DataFrame(columns=['Cafe', 'Week', 'Dow', 'Time_Interval', 'Time_Interval_15_min', 'Department', 'Rota_24', 'RotaQuarterHours'])
     
     start_time = time.time() 
@@ -159,7 +153,7 @@ if st.checkbox("Process"):
 
     st.session_state[f'df_{cafe}'] = pd.DataFrame(data) 
     if week == weeks[-1]:
-            empty_space.success(f"Tranformation Completed : Time Taken: **{round(time.time() - start_time, 2)}**")
+            empty_space.success(f"Tranformation Completed : Time Taken: {time.time() - start_time}")
     with st.container(border=True):
         st.dataframe(st.session_state[f'df_{cafe}'], use_container_width=True)
 
@@ -170,9 +164,7 @@ if st.checkbox("Process"):
             file_name=f"{cafe}_Rota_Transformation.csv",
             mime="text/csv"
         )
-
-        st.divider()
-        with st.expander('Checks'):
+        with st.expander("Checks"):
             # No create a dataframe grouped by Week and Sum Quarter Hours but first transform the data into float
             df_grouped = st.session_state[f'df_{cafe}'].copy()
             df_grouped['RotaQuarterHours'] = df_grouped['RotaQuarterHours'].astype(float)
@@ -183,8 +175,7 @@ if st.checkbox("Process"):
             st.write(f"Total Hours for {cafe} is {df_grouped['Hours'].sum() * 4}")
             st.divider()    
 
-            # add the same but with departemnts as wel
-
+            # add the same but with departemnts as well
             df_grouped_department_Week_rota_letter = st.session_state[f'df_{cafe}'].copy()
             df_grouped_department_Week_rota_letter['RotaQuarterHours'] = df_grouped_department_Week_rota_letter['RotaQuarterHours'].astype(float)
             df_grouped_department_Week_rota_letter = df_grouped_department_Week_rota_letter.groupby(['Week', 'Rota_24', 'Department'])['RotaQuarterHours'].sum().reset_index()
