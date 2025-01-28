@@ -181,13 +181,13 @@ class TransformationRotaReady:
         self.df["Site (appointment)"] = "Dishoom " + self.df["Site (appointment)"]
 
         res_to_rename = {
-            'Dishoom Shoreditch': 'D2',
             'Dishoom Covent Garden': 'D1',
-            'Dishoom Kensington': 'D6',
+            'Dishoom Shoreditch': 'D2',
             'Dishoom Kings Cross': 'D3',
             'Dishoom Carnaby': 'D4',
-            'Dishoom Manchester': 'D7',
             'Dishoom Edinburgh': 'D5',
+            'Dishoom Kensington': 'D6',
+            'Dishoom Manchester': 'D7',
             'Dishoom Birmingham': 'D8',
             'Dishoom Canary Wharf': 'D9',
             'Dishoom Battersea': 'D10',
