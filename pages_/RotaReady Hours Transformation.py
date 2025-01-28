@@ -2,8 +2,8 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 import pandas as pd
-from Transformations import TransformationRotaReady
-from Transformations_Fourth import TransformationFourth, TransformationFourtDOUBLE
+from transformations.Transformations import TransformationRotaReady
+from transformations.Transformations_Fourth import TransformationFourth, TransformationFourtDOUBLE
 
 def combine_dfs(dfs):
     return pd.concat(dfs, ignore_index=True)
@@ -13,7 +13,7 @@ st.title('🚀 Transforming Labour Data CSV')
 choice = st.sidebar.radio('Choose an option', ('RotaReady', 'Fourth Single Shifts', 'Fourth Double Shifts'))
 
 uploaded_file = st.sidebar.file_uploader("Choose a file", accept_multiple_files=True)
-expander_original = st.expander("Original CSV")
+expander_original = st.expander("📄 Original CSV")
 
 if uploaded_file is not None and uploaded_file != []:
     if len(uploaded_file) > 1:
@@ -37,8 +37,56 @@ if uploaded_file is not None and uploaded_file != []:
         # filter to keep only my name
         df = df[(df["First name"] == choosen_name)]
         surnames = df["Last name"].unique()
+    
+    site_to_keep = [
+        'Covent Garden',
+        'Shoreditch',
+        'Kings Cross', 
+        'Carnaby',
+        'Edinburgh',
+        'Kensington',
+        'Manchester',
+        'Birmingham',
+        'Canary Wharf',
+        'Battersea',
 
-    expander_original.write(df)
+        'Brighton Permit Room',
+        'Cambridge Permit Room',
+        'Oxford Permit Room'
+    ]
+    
+    # Filter df to only include rows with site attribution in site_to_keep
+    df = df[df['Site (attribution)'].isin(site_to_keep)]
+    
+    with expander_original:
+        st.write(f"Total rows: **{len(df)}**")
+        # Create summary table of event types
+        event_type_summary = pd.DataFrame({
+            'Event Type': df["Event type"].unique(),
+            'Count': [len(df[df["Event type"] == event_type]) for event_type in df["Event type"].unique()]
+        })
+        # Add total row
+        event_type_summary.loc['Total'] = ['Total', event_type_summary['Count'].sum()]
+        
+        # Create summary table of sites (filtered for shifts only)
+        shift_df = df[df["Event type"] == "Shift"]
+        site_summary = pd.DataFrame({
+            'Site': shift_df["Site (attribution)"].unique(),
+            'Count': [len(shift_df[shift_df["Site (attribution)"] == site]) for site in shift_df["Site (attribution)"].unique()]
+        })
+        # Add total row
+        site_summary.loc['Total'] = ['Total', site_summary['Count'].sum()]
+        
+        c1,c2 = st.columns(2)
+        with c1:
+            st.dataframe(event_type_summary, use_container_width=True)
+        with c2:
+            st.dataframe(site_summary, use_container_width=True)
+        st.write(df)
+
+    toggle_start = st.toggle("🚀 Start Transformation", value=False)  
+    if not toggle_start:
+        st.stop()
     if choice == 'Fourth Single Shifts':
         df_transformed = TransformationRotaReady(df).df
     elif choice == 'RotaReady':
@@ -60,10 +108,24 @@ if uploaded_file is not None and uploaded_file != []:
         df_transformed['TotalHours'] = df_transformed['Paid hours']
         st.write(df_transformed)
 
-    expander_final = st.expander("Final CSV", expanded=True)
+    expander_final = st.expander("📊 Final CSV", expanded=True)
     with expander_final:
+        st.write(f"Total rows: **{len(df_transformed)}**")
+        c1,c2 = st.columns(2)
+        with c1:
+            # add the same check for event types and sites
+            event_type_summary = pd.DataFrame({
+                'Event Type': df_transformed["Event type"].unique(),
+                'Count': [len(df_transformed[df_transformed["Event type"] == event_type]) for event_type in df_transformed["Event type"].unique()]
+            })
+            st.dataframe(event_type_summary, use_container_width=True) 
+        with c2:
+            site_summary = pd.DataFrame({
+                'Site': df_transformed["Site (attribution)"].unique(),
+                'Count': [len(df_transformed[df_transformed["Site (attribution)"] == site]) for site in df_transformed["Site (attribution)"].unique()]
+            })
+            st.dataframe(site_summary, use_container_width=True)
         st.write(df_transformed)
-        st.write(len(df_transformed))
 
     # transform start to a datetime object
     df["Start"] = pd.to_datetime(df["Start"], format='mixed', dayfirst=True)
