@@ -29,7 +29,9 @@ class TransformationRotaReady:
         start_time = time.time()
         # keep only event type = shift
         self.df = self.df[self.df["Event type"] == "Shift"]
-        self.df = self.df.astype(str)
+        # Convert only specific columns to string, not all columns
+        string_columns = ["Event type", "Site (appointment)"]  # Add other string columns as needed
+        self.df[string_columns] = self.df[string_columns].astype(str)
         st.info(f'🧹 Cleaning done (only kept shift data, removed absence and salary data) - {len(self.df)} rows - {round((time.time() - start_time))} seconds')
 
     def transformation1(self):
@@ -55,6 +57,7 @@ class TransformationRotaReady:
         self.df["Unpaid hours"] = self.df["Unpaid hours"].astype(float)
         self.df["TotalHours"] = self.df["Paid hours"] + self.df["Unpaid hours"]
         #4. Keep only more than 0.5 hours and less than 15 hours
+        invalid_hours = self.df[(self.df["TotalHours"] <= 0.5) | (self.df["TotalHours"] >= 15)]
         self.df = self.df[(self.df["TotalHours"] > 0.5) & (self.df["TotalHours"] < 15)]
         self.min_hour = 4
         self.df["HourEnd"] = np.where(self.df["HourEnd"] < self.min_hour, self.df["HourEnd"] + 24, self.df["HourEnd"])
@@ -82,7 +85,13 @@ class TransformationRotaReady:
         # as int
         choices = [int(i) for i in choices] 
         self.df["StartMinutes"] = np.select(conditions_start, choices, default=45)
-        st.info('⚡ Transformation 1/4 done (Processing dates, calculating hours & minutes, filtering shifts between 0.5-15h) - %s seconds | Total rows: %s' % (round((time.time() - start_time)), len(self.df)))
+        with st.container():
+            st.info('⚡ Transformation 1/4 done (Processing dates, calculating hours & minutes, filtering shifts between 0.5-15h) - %s seconds | Total rows: %s' % (round((time.time() - start_time)), len(self.df)))
+            if not invalid_hours.empty:
+                st.dataframe(invalid_hours)
+        # Ensure numeric columns are properly converted
+        numeric_columns = ["Paid hours", "Unpaid hours", "TotalHours"]
+        self.df[numeric_columns] = self.df[numeric_columns].apply(pd.to_numeric, errors='coerce')
         return self.df
 
     def transformation2(self):
@@ -92,6 +101,7 @@ class TransformationRotaReady:
         columns = ['HourStart','StartMinutes','Start', 'HourEnd', 'EndMinutes', 'Finish']
         hours_minutes = [str(hour)+":"+str(minute) for hour in hours for minute in minutes]
         self.df = pd.concat([self.df, pd.DataFrame(0, index=self.df.index, columns=hours_minutes)], axis=1)
+        invalid_rows = []
         for index, row in self.df.iterrows():
             #get start hour and end hour
             start_hour = row["HourStart"]
@@ -106,7 +116,7 @@ class TransformationRotaReady:
             try:
                 start_column_index = self.df.columns.get_loc(f"{start_hour}:{str(min_start).zfill(2)}")
             except: 
-                st.write(row)
+                invalid_rows.append(row)
                 continue
             end_column_index = self.df.columns.get_loc(f"{end_hour}:{str(min_end).zfill(2)}")
 
@@ -130,7 +140,12 @@ class TransformationRotaReady:
                     # set the closest allowed break hour to 0.5
                     self.df.loc[index, str(closest_allowed_break_hour)+":00"] = 0
 
-        st.info('⚡ Transformation 2/4 done (Creating 15 min intervals for breaks) - %s seconds | Total rows: %s' % (round((time.time() - start_time)), len(self.df)))
+        with st.container():
+            st.info('⚡ Transformation 2/4 done (Creating 15 min intervals for breaks) - %s seconds | Total rows: %s' % (round((time.time() - start_time)), len(self.df)))
+            if len(invalid_rows) > 0:
+                invalid_df = pd.DataFrame(invalid_rows)
+                # Convert numeric columns to string before display
+                st.dataframe(invalid_df.astype(str))
         return self.df
     
     def transformation2_(self):
@@ -176,8 +191,12 @@ class TransformationRotaReady:
     
     def transformation3(self):
         start_time = time.time()
-        # here we need to create a column called MinuteAfterClosing (each cafe has a different closing time - relative to day of the week)
-        # add Dishoom to Site (appointment) column before the actual site
+        
+        # Add logging to see what sites are present before filtering
+        unique_sites_before = self.df["Site (appointment)"].unique()
+        rows_before = len(self.df)
+        
+        # here we need to create a column called MinuteAfterClosing
         self.df["Site (appointment)"] = "Dishoom " + self.df["Site (appointment)"]
 
         res_to_rename = {
@@ -191,15 +210,24 @@ class TransformationRotaReady:
             'Dishoom Birmingham': 'D8',
             'Dishoom Canary Wharf': 'D9',
             'Dishoom Battersea': 'D10',
-
             'Dishoom Brighton Permit Room': 'PR1',
-            'Dishoom Cambridge Permit Room' : 'PR2',
+            'Dishoom Cambridge Permit Room': 'PR2',
             'Dishoom Oxford Permit Room': 'PR3',
         }
 
+        # Add logging to see which sites don't match
+        sites_not_in_mapping = set(self.df["Site (appointment)"]) - set(res_to_rename.keys())
+        if sites_not_in_mapping:
+            st.warning(f"Sites not in mapping: {sites_not_in_mapping}")
+
         self.df["Site (appointment)"] = self.df["Site (appointment)"].replace(res_to_rename)
-        # drop the rest of them
-        res_val = res_to_rename.values()
+        
+        # Instead of dropping, filter and log dropped rows
+        res_val = list(res_to_rename.values())
+        dropped_sites = self.df[~self.df["Site (appointment)"].isin(res_val)]
+        if not dropped_sites.empty:
+            st.warning(f"Dropping {len(dropped_sites)} rows with sites: {dropped_sites['Site (appointment)'].unique()}")
+        
         self.df = self.df[self.df["Site (appointment)"].isin(res_val)]
 
         self.df['Day of the week'] = pd.to_datetime(self.df["Start"],format = 'mixed', dayfirst=True).dt.day_name()
@@ -250,8 +278,14 @@ class TransformationRotaReady:
         }
 
         self.df['Closing time'] = self.df.apply(lambda x: res_[x['Site (appointment)']][x['Day of the week']], axis=1)
-        #self.data['Closing time'] = self.data['Day of the week'].apply(lambda x: 23 if x in ['Sunday','Monday', 'Tuesday', 'Wednesday'] else 24)
-        st.info('⚡ Transformation 3/4 done (Adding closing time for each restaurant) - %s seconds | Total rows: %s' % (round((time.time() - start_time)), len(self.df)))
+        # Ensure Closing time is numeric
+        self.df['Closing time'] = pd.to_numeric(self.df['Closing time'], errors='coerce')
+        
+        # Ensure HourEnd and EndMinutes are numeric
+        self.df['HourEnd'] = pd.to_numeric(self.df['HourEnd'], errors='coerce')
+        self.df['EndMinutes'] = pd.to_numeric(self.df['EndMinutes'], errors='coerce')
+        
+        st.info(f'⚡ Transformation 3/4 done (Adding closing time for each restaurant) - {round((time.time() - start_time))} seconds | Total rows: {len(self.df)} (Dropped {rows_before - len(self.df)} rows)')
         return self.df
     
     def transformation4(self):
@@ -259,10 +293,10 @@ class TransformationRotaReady:
         def lambda_for_time_after_closing(x):
             # case 1 
             if x['HourEnd'] == x['Closing time']:
-                return x['EndMinutes']
+                return int(x['EndMinutes'])
             # case 2
             elif x['HourEnd'] > x['Closing time']:
-                return ((x['HourEnd'] - x['Closing time'])*60) + int(x['EndMinutes'])
+                return int((x['HourEnd'] - x['Closing time'])*60) + int(x['EndMinutes'])
             # case 3
             elif x['HourEnd'] < x['Closing time']:
                 return 0
