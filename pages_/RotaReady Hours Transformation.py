@@ -52,7 +52,8 @@ if uploaded_file is not None and uploaded_file != []:
 
         'Brighton Permit Room',
         'Cambridge Permit Room',
-        'Oxford Permit Room'
+        'Oxford Permit Room',
+        'Portobello Permit Room'
     ]
     
     # Filter df to only include rows with site attribution in site_to_keep

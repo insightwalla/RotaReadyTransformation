@@ -213,6 +213,7 @@ class TransformationRotaReady:
             'Dishoom Brighton Permit Room': 'PR1',
             'Dishoom Cambridge Permit Room': 'PR2',
             'Dishoom Oxford Permit Room': 'PR3',
+            'Dishoom Portobello Permit Room': 'PR4',
         }
 
         # Add logging to see which sites don't match
@@ -274,7 +275,8 @@ class TransformationRotaReady:
             'D10': group_1_closing_schema,
             'PR1': group_1_closing_schema,
             'PR2': group_1_closing_schema,
-            'PR3': group_1_closing_schema
+            'PR3': group_1_closing_schema,
+            'PR4': group_1_closing_schema
         }
 
         self.df['Closing time'] = self.df.apply(lambda x: res_[x['Site (appointment)']][x['Day of the week']], axis=1)
