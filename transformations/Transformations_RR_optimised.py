@@ -137,9 +137,11 @@ class TransformationRotaReady:
             'Dishoom Birmingham': 'D8',
             'Dishoom Canary Wharf': 'D9',
             'Dishoom Battersea': 'D10',
+            'Dishoom Glasgow': 'D11',
             'Dishoom Brighton Permit Room': 'PR1',
             'Dishoom Cambridge Permit Room': 'PR2',
             'Dishoom Oxford Permit Room': 'PR3',
+            'Dishoom Portobello Permit Room': 'PR4',
         }
         
         # Vectorized operations
