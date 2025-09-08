@@ -49,6 +49,7 @@ if uploaded_file is not None and uploaded_file != []:
         'Birmingham',
         'Canary Wharf',
         'Battersea',
+        'Glasgow',
 
         'Brighton Permit Room',
         'Cambridge Permit Room',
