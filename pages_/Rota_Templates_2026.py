@@ -60,7 +60,7 @@ def _init_session_state():
 def show_templates(df_A, df_B, df_C, df_D, df_E, df_F, df_rota_lookup):
     all_df_comb = pd.concat([df_A, df_B, df_C, df_D, df_E, df_F], axis=0)
     list_of_df = [all_df_comb, df_A, df_B, df_C, df_D, df_E, df_F, df_rota_lookup]
-    expanders = ['All', 'Rota A', 'Rota B', 'Rota C', 'Rota D', 'Rota E', 'Rota F', '2025RotaLookup']
+    expanders = ['All', 'Rota A', 'Rota B', 'Rota C', 'Rota D', 'Rota E', 'Rota F', '2026RotaLookup']
     for i, df in enumerate(list_of_df):
         if 'Hours' in df.columns:
             with st.expander(f"{expanders[i]} / Total Hours: {df['Hours'].sum()}"):
@@ -146,7 +146,7 @@ if st.checkbox("Process"):
                         'Department': division,
                         'Rota': rota_letters[week-1],
                         'RotaQuarterHours': rota_template[interval].sum(),
-                        'Year' : 2025
+                        'Year' : 2026
                     }
                     data.append(entry)
 
