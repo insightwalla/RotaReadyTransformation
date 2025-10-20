@@ -101,7 +101,7 @@ class TransformationFourth:
         # change site appointment skipping the first word
         self.df['Site (appointment)'] = self.df['Site (appointment)'].str.split(' ').str[1:]
         # transform in string
-        self.df['Site (appointment)'] = self.df['Site (appointment)'].astype(str).replace('\[|\]|\'', '', regex=True)
+        self.df['Site (appointment)'] = self.df['Site (appointment)'].astype(str).replace(r'\[|\]|\'', '', regex=True)
         # take off commas
         self.df['Site (appointment)'] = self.df['Site (appointment)'].str.replace(',', '')
         # site attribution is the same as site appointment

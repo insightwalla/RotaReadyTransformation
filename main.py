@@ -5,5 +5,6 @@ pg = st.navigation([
     st.Page("pages_/Rota_Templates_2024.py", title="Rota Ready Template 2024", icon="📅"), 
     st.Page("pages_/Rota_Templates_2025.py", title="Rota Ready Template 2025", icon="🗓️"),
     st.Page("pages_/Rota_Templates_2026.py", title="Rota Ready Template 2026", icon="🗓️"),
+    st.Page("pages_/Sunday_Preprocess.py", title = "Sunday Pre-Process", icon="🌟"),
 ])
 pg.run()
