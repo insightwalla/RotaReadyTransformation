@@ -142,6 +142,7 @@ class TransformationRotaReady:
             'Dishoom Cambridge Permit Room': 'PR2',
             'Dishoom Oxford Permit Room': 'PR3',
             'Dishoom Portobello Permit Room': 'PR4',
+            'Dishoom Liverpool Permit Room': 'PR5',
         }
         
         # Vectorized operations
@@ -161,7 +162,7 @@ class TransformationRotaReady:
         restaurant_groups = {
             'D1': 'group1', 'D2': 'group2', 'D3': 'group2', 'D4': 'group1', 'D5': 'group1',
             'D6': 'group3', 'D7': 'group1', 'D8': 'group1', 'D9': 'group1', 'D10': 'group1', 'D11': 'group1',
-            'PR1': 'group1', 'PR2': 'group1', 'PR3': 'group1', 'PR4': 'group1'
+            'PR1': 'group1', 'PR2': 'group1', 'PR3': 'group1', 'PR4': 'group1', 'PR5': 'group1'
         }
         
         self.df['Closing time'] = self.df.apply(lambda x: closing_schemas[restaurant_groups[x['Site (appointment)']]][x['Day of the week']], axis=1)
